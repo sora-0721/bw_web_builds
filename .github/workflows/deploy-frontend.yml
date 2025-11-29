@@ -20,7 +20,7 @@ jobs:
           echo "Downloading version: $LATEST_TAG"
           
           # 下载对应的 tar.gz 包 (注意: bw_web_builds 的 release 文件名通常是 bw_web_vault_tag.tar.gz)
-          wget "https://github.com/dani-garcia/bw_web_builds/releases/download/$LATEST_TAG/bw_web_vault_${LATEST_TAG}.tar.gz"
+          wget "https://github.com/dani-garcia/bw_web_builds/releases/download/$LATEST_TAG/bw_web_${LATEST_TAG}.tar.gz"
           
           # 解压到 public 目录 (Cloudflare Pages 默认发布目录)
           mkdir public
