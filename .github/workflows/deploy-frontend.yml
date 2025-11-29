@@ -29,7 +29,9 @@ jobs:
           # 修正: bw_web_builds 解压后通常带有一层 web-vault 文件夹，需要移出来
           # 根据实际解压结构调整，通常是解压出来包含 index.html 等
           if [ -d "public/web-vault" ]; then
+            shopt -s dotglob
             mv public/web-vault/* public/
+            shopt -u dotglob
             rmdir public/web-vault
           fi
 
