@@ -1,9 +1,9 @@
 name: Deploy Frontend
 
 on:
-  workflow_dispatch: # 手动触发
+  workflow_dispatch: # Manual trigger
 #  schedule:
-#    - cron: '0 2 * * 0' # 每周日自动检查更新
+#    - cron: '0 2 * * 0' # Check for updates every Sunday
 
 jobs:
   deploy-pages:
@@ -15,19 +15,19 @@ jobs:
 
       - name: Download latest web-vault release
         run: |
-          # 获取最新版本号
+          # Get latest version tag
           LATEST_TAG=$(curl -s https://api.github.com/repos/dani-garcia/bw_web_builds/releases/latest | jq -r .tag_name)
           echo "Downloading version: $LATEST_TAG"
           
-          # 下载对应的 tar.gz 包 (注意: bw_web_builds 的 release 文件名通常是 bw_web_tag.tar.gz)
+          # Download corresponding tar.gz package (Note: bw_web_builds releases are typically named bw_web_tag.tar.gz)
           wget "https://github.com/dani-garcia/bw_web_builds/releases/download/$LATEST_TAG/bw_web_${LATEST_TAG}.tar.gz"
           
-          # 解压到 public 目录 (Cloudflare Pages 默认发布目录)
+          # Extract to public directory (Cloudflare Pages default deployment directory)
           mkdir public
           tar -xvf bw_web_${LATEST_TAG}.tar.gz -C public/
           
-          # 修正: bw_web_builds 解压后通常带有一层 web-vault 文件夹，需要移出来
-          # 根据实际解压结构调整，通常是解压出来包含 index.html 等
+          # Fix: bw_web_builds usually extracts with a web-vault folder, need to move contents out
+          # Adjust based on actual extraction structure, usually contains index.html etc.
           if [ -d "public/web-vault" ]; then
             shopt -s dotglob
             mv public/web-vault/* public/
@@ -35,9 +35,16 @@ jobs:
             rmdir public/web-vault
           fi
 
+      - name: Create Cloudflare Pages project (if it doesn't exist)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create warden-frontend-new --production-branch=main --compatibility-date=2024-01-01 || true
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy public --project-name=warden-frontend --branch=main
+          command: pages deploy public --project-name=warden-frontend-new --branch=main
